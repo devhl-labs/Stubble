@@ -64,6 +64,7 @@ namespace Stubble.Core.Renderers.StringRenderer.TokenRenderers
             else if (LambdaTypes.Contains(value.GetType()))
             {
                 var sectionContent = obj.SectionContent.ToString();
+                var lambdaView = FindNearestObjectView(context);
 
                 switch (value)
                 {
@@ -73,13 +74,13 @@ namespace Stubble.Core.Renderers.StringRenderer.TokenRenderers
                     case Func<string, Func<string, Task<string>>, Task<object>> _:
                         throw new StubbleException("Async lambdas are not allowed in non-async template rendering");
                     case Func<dynamic, string, object> func:
-                        value = func(context.View, sectionContent);
+                        value = func(lambdaView, sectionContent);
                         break;
                     case Func<string, object> func:
                         value = func(sectionContent);
                         break;
                     case Func<dynamic, string, Func<string, string>, object> func:
-                        value = func(context.View, sectionContent, RenderInContext(context, obj.Tags));
+                        value = func(lambdaView, sectionContent, RenderInContext(context, obj.Tags));
                         break;
                     case Func<string, Func<string, string>, object> func:
                         value = func(sectionContent, RenderInContext(context, obj.Tags));
@@ -127,14 +128,15 @@ namespace Stubble.Core.Renderers.StringRenderer.TokenRenderers
             else if (LambdaTypes.Contains(value.GetType()))
             {
                 var sectionContent = obj.SectionContent.ToString();
+                var lambdaView = FindNearestObjectView(context);
 
                 switch (value)
                 {
                     case Func<dynamic, string, Task<object>> func:
-                        value = await func(context.View, sectionContent).ConfigureAwait(false);
+                        value = await func(lambdaView, sectionContent).ConfigureAwait(false);
                         break;
                     case Func<dynamic, string, object> func:
-                        value = func(context.View, sectionContent);
+                        value = func(lambdaView, sectionContent);
                         break;
                     case Func<string, Task<object>> func:
                         value = await func(sectionContent).ConfigureAwait(false);
@@ -143,10 +145,10 @@ namespace Stubble.Core.Renderers.StringRenderer.TokenRenderers
                         value = func(sectionContent);
                         break;
                     case Func<dynamic, string, Func<string, Task<string>>, Task<object>> func:
-                        value = await func(context.View, sectionContent, RenderInContextAsync(context, obj.Tags)).ConfigureAwait(false);
+                        value = await func(lambdaView, sectionContent, RenderInContextAsync(context, obj.Tags)).ConfigureAwait(false);
                         break;
                     case Func<dynamic, string, Func<string, string>, object> func:
-                        value = func(context.View, sectionContent, RenderInContext(context, obj.Tags));
+                        value = func(lambdaView, sectionContent, RenderInContext(context, obj.Tags));
                         break;
                     case Func<string, Func<string, Task<string>>, Task<object>> func:
                         value = await func(sectionContent, RenderInContextAsync(context, obj.Tags)).ConfigureAwait(false);
@@ -163,6 +165,25 @@ namespace Stubble.Core.Renderers.StringRenderer.TokenRenderers
             {
                 await renderer.RenderAsync(obj, context.Push(value));
             }
+        }
+
+        private static dynamic FindNearestObjectView(Context context)
+        {
+            var current = context;
+            while (current != null)
+            {
+                var view = current.View;
+                if (view != null && !(view is bool) && !(view is int) && !(view is long)
+                    && !(view is float) && !(view is double) && !(view is decimal)
+                    && !(view is string))
+                {
+                    return view;
+                }
+
+                current = current.ParentContext;
+            }
+
+            return context.View;
         }
 
         private Func<string, string> RenderInContext(Context context, Classes.Tags tags)

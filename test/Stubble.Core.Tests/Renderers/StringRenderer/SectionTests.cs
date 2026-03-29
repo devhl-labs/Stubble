@@ -328,5 +328,34 @@ namespace Stubble.Core.Tests.Renderers.StringRenderer
             var myStr = sr.ReadToEnd();
             Assert.Equal(result, myStr);
         }
+
+        [Fact]
+        public void ThreeArgLambda_InsideBooleanSection_ReceivesNearestObjectView()
+        {
+            var stubble = new Stubble.Core.Builders.StubbleBuilder().Build();
+
+            dynamic capturedView = null;
+            var data = new Dictionary<string, object>
+            {
+                { "showSection", true },
+                { "greeting", "Hello" },
+                {
+                    "myLambda",
+                    new Func<dynamic, string, Func<string, string>, object>((ctx, tmpl, render) =>
+                    {
+                        capturedView = ctx;
+                        return render(tmpl);
+                    })
+                }
+            };
+
+            var templateStr = "{{#showSection}}{{#myLambda}}{{greeting}}{{/myLambda}}{{/showSection}}";
+            var result = stubble.Render(templateStr, data);
+
+            Assert.Equal("Hello", result);
+            // The lambda should receive the root data dictionary (nearest object view),
+            // not the boolean value 'true' from the showSection context.
+            Assert.IsAssignableFrom<IDictionary<string, object>>(capturedView);
+        }
     }
 }
