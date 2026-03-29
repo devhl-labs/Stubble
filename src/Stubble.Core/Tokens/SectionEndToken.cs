@@ -3,6 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 // </copyright>
 
+using Stubble.Core.Classes;
+
 namespace Stubble.Core.Tokens
 {
     /// <summary>
@@ -24,5 +26,10 @@ namespace Stubble.Core.Tokens
         /// Gets or sets the end position for the content
         /// </summary>
         public int ContentEndPosition { get; set; }
+
+        /// <summary>
+        /// Gets or sets the tags that were active when this section was closed
+        /// </summary>
+        public Classes.Tags CurrentTags { get; set; }
     }
 }

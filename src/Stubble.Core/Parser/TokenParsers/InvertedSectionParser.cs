@@ -87,7 +87,7 @@ namespace Stubble.Core.Parser.TokenParsers
             {
                 if (sectionTag.SectionName.Equals(sectionEndTag.SectionName))
                 {
-                    sectionTag.Tags = processor.CurrentTags;
+                    sectionTag.Tags = sectionEndTag.CurrentTags ?? processor.CurrentTags;
                     sectionTag.EndPosition = sectionEndTag.EndPosition;
                     sectionTag.IsClosed = true;
                 }
@@ -128,6 +128,7 @@ namespace Stubble.Core.Parser.TokenParsers
                     SectionName = sectionName,
                     EndPosition = tagEnd,
                     ContentEndPosition = blockStart,
+                    CurrentTags = processor.CurrentTags,
                     IsClosed = true
                 };
 
