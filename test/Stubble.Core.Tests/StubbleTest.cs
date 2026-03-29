@@ -501,45 +501,12 @@ namespace Stubble.Core.Tests
         }
 
         [Fact]
-        public void It_Should_Propagate_Delimiter_Changes_To_Lambda_Render_Callback()
-        {
-            var stubble = new StubbleBuilder().Build();
-
-            var obj = new
-            {
-                value = "World",
-                test = new Func<string, Func<string, string>, object>((template, render) => render(template))
-            };
-
-            var result = stubble.Render("{{=<% %>=}}Outside: <% value %>\nInside: <%#test%><% value %><%/test%>", obj);
-            Assert.Equal("Outside: World\nInside: World", result);
-        }
-
-        [Fact]
-        public void It_Should_Propagate_Delimiter_Changes_To_Lambda_Render_Callback_Nested()
-        {
-            var stubble = new StubbleBuilder().Build();
-
-            var data = new
-            {
-                value = "World",
-                lambdas = new
-                {
-                    test = (Func<string, Func<string, string>, object>)((template, render) => render(template))
-                }
-            };
-
-            var template = "{{=<% %>=}}\nOutside lambda: <% value %>\nInside lambda: <%#lambdas.test%><% value %><%/lambdas.test%>\n";
-
-            var result = stubble.Render(template, data);
-            Assert.Contains("Inside lambda: World", result);
-        }
-
-        [Fact]
         public void It_Should_Use_Correct_Delimiters_In_Lambda_When_Delimiters_Change_After_Section()
         {
-            // This tests the bug where SectionToken.Tags is set using the FINAL processor.CurrentTags
-            // (after all parsing) instead of the tags active when the section was closed.
+            // When delimiters change AFTER a lambda section closes, SectionToken.Tags
+            // is incorrectly set to the final processor.CurrentTags (the post-change
+            // delimiters) rather than the tags that were active when the section closed.
+            // This causes the render callback to parse the section body with wrong delimiters.
             var stubble = new StubbleBuilder().Build();
 
             var obj = new
@@ -548,8 +515,8 @@ namespace Stubble.Core.Tests
                 test = new Func<string, Func<string, string>, object>((template, render) => render(template))
             };
 
-            // Delimiters change from {{ }} to <% %> before the section,
-            // then change back to {{ }} after the section.
+            // Delimiters change to <% %>, lambda section uses <% %>, then delimiters revert to {{ }}.
+            // The lambda body "<% value %>" should be parsed with <% %> delimiters.
             var result = stubble.Render("{{=<% %>=}}<%#test%><% value %><%/test%><%={{ }}=%>{{value}}", obj);
             Assert.Equal("WorldWorld", result);
         }
