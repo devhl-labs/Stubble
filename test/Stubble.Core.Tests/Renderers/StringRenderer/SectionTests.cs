@@ -357,5 +357,30 @@ namespace Stubble.Core.Tests.Renderers.StringRenderer
             // not the boolean value 'true' from the showSection context.
             Assert.IsAssignableFrom<IDictionary<string, object>>(capturedView);
         }
+
+        [Fact]
+        public void ThreeArgLambda_InsideBooleanSection_DotStillResolvesToBool()
+        {
+            var stubble = new Stubble.Core.Builders.StubbleBuilder().Build();
+
+            var data = new Dictionary<string, object>
+            {
+                { "showSection", true },
+                {
+                    "myLambda",
+                    new Func<dynamic, string, Func<string, string>, object>((ctx, tmpl, render) =>
+                    {
+                        return render(tmpl);
+                    })
+                }
+            };
+
+            // {{.}} inside a boolean section should still resolve to "True",
+            // even though FindNearestObjectView passes the parent dict to the lambda.
+            var templateStr = "{{#showSection}}{{#myLambda}}{{.}}{{/myLambda}}{{/showSection}}";
+            var result = stubble.Render(templateStr, data);
+
+            Assert.Equal("True", result);
+        }
     }
 }
