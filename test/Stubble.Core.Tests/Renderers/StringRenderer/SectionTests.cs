@@ -330,7 +330,7 @@ namespace Stubble.Core.Tests.Renderers.StringRenderer
         }
 
         [Fact]
-        public void ThreeArgLambda_InsideBooleanSection_ReceivesNearestObjectView()
+        public void It_Can_Render_ThreeArgLambda_InsideBooleanSection_WithNearestObjectView()
         {
             var stubble = new Stubble.Core.Builders.StubbleBuilder().Build();
 
@@ -359,7 +359,7 @@ namespace Stubble.Core.Tests.Renderers.StringRenderer
         }
 
         [Fact]
-        public void ThreeArgLambda_InsideBooleanSection_DotStillResolvesToBool()
+        public void It_Can_Render_ThreeArgLambda_InsideBooleanSection_DotResolvesToBool()
         {
             var stubble = new Stubble.Core.Builders.StubbleBuilder().Build();
 
